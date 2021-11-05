@@ -1,0 +1,361 @@
+
+
+
+---
+title: STAT 4355 Final
+author: John Kenney, Kevin Shaik, Keerthi Srilakshmidaran
+output: pdf_document
+urlcolor: blue
+geometry: "top = 1cm"
+always_allow_html: yes
+---
+
+
+**Problem 1**
+```{R, tidy = TRUE, message = FALSE} 
+library(dplyr)
+library(tidyr)
+df <- read.csv("C:/Users/jkenn/OneDrive/Documents/R/Stat4355HW/final/life1.csv")
+full_data <- read.csv("C:/Users/jkenn/OneDrive/Documents/R/Stat4355HW/final/life Expectancy Data.csv")
+#head(temp)
+full_data <- dplyr::select(full_data, -(Status),-(Adult.Mortality:infant.deaths),-(percentage.expenditure),-(under.five.deaths),-(Diphtheria),-(Population),-(thinness..1.19.years:thinness.5.9.years))
+#head(full_data)
+#nrow(full_data)
+#colSums(is.na(full_data))
+full_data <- na.omit(full_data) 
+#full_data <- temp[,1:2]
+rownames(full_data) <- 1:nrow(full_data)
+
+#nrow(full_data)
+#write.csv(full_data,'Life1NoNAIndexedCorrectly.csv')
+df <- df[,3:13]#select(df, -(X:Year))
+#colnames(df)[19:20] <- c("thick","thin")
+#df <- select(df, -(Country:Status),-(thick:thin))
+
+#head(df)
+
+df <- df %>% relocate(LifeExpectancy, .after = last_col())
+df <- df %>% drop_na("LifeExpectancy")
+#colSums(is.na(df))
+df <- na.omit(df) 
+#head(df)
+#indexer <- df[,1]
+#indexer <- data.frame( "index to smaller data" = 1:nrow(df),"index to full data" = df[,1])
+#View(indexer)
+#nrow(df)
+#head(df)
+#df <- df[,2:12]
+#rownames(df) <- 1:nrow(df)
+#View(df)
+#View(full_data)
+#colSums(is.na(df))
+```
+
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+library(reshape2)
+library(ggplot2)
+df2 <- melt(df[,1:11], id.vars = "LifeExpectancy")
+ggplot(df2) +
+  geom_jitter(aes(value,LifeExpectancy, colour=variable),) +
+  facet_wrap(~variable, scales="free_x") + 
+  theme(axis.text.x = element_text(angle = 30, hjust=1))
+
+```
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+library(reshape2)
+library(ggplot2)
+ggplot(df,aes(x = df[,7], y = df[,11])) + geom_point() + geom_smooth(aes(x = df[,7], y = df[,11], col="red"), method=lm, se=FALSE) + theme(axis.text.x = element_text(angle = 30, hjust=1)) + xlab("HIV.AIDS") + ylab("Life Expectancy") + ggtitle("Life Expectancy vs HIV.AIDS")
+
+```
+
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+ggplot(df2) +
+  geom_jitter(aes(value,LifeExpectancy, colour=variable),) +
+  geom_smooth(aes(value,LifeExpectancy, colour="purple"), method=lm, se=FALSE) +
+  facet_wrap(~variable, scales="free_x") + 
+  theme(axis.text.x = element_text(angle = 30, hjust=1)) 
+
+```
+
+
+
+```{R, tidy = TRUE, message = FALSE} 
+full <- lm(LifeExpectancy ~ ., data = df)
+summary(full)
+```
+```{R, tidy = TRUE, message = FALSE} 
+library(car)
+vif(full)
+```
+
+```{R, tidy = TRUE, message = FALSE} 
+#View(trainer)
+df2 <- dplyr::select(df, -(Alcohol),-(HepatitisB),-(TotalExpenditure))
+
+reducedmodel <- lm(LifeExpectancy ~ ., data = df2)
+summary(reducedmodel)
+```
+
+```{R, tidy = TRUE, message = FALSE} 
+library(car)
+vif(reducedmodel)
+```
+
+```{R, tidy = TRUE, message = FALSE} 
+anova(reducedmodel, full)
+```
+
+
+
+
+```{R, tidy = TRUE, message = FALSE}
+#QQ plot approach
+library(MASS)
+library(car)
+par(mfrow=c(1,2))
+hist(studres(reducedmodel), breaks=25, freq=F, col="cornflowerblue",
+cex.axis=1, cex.lab=1, cex.main=1)
+qqPlot(reducedmodel) + title("QQ plot of StuResiduals vs t-Quantiles", cex.main = 1)
+full_data[62:63,]
+```
+
+
+```{R, tidy = TRUE, message = FALSE}
+residualPlot(reducedmodel, type="rstudent", quadratic=F, col = "dodgerblue",
+pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5) + title("Rstudent Residuals vs Fitted values")
+
+```
+
+
+
+
+```{R, tidy = TRUE, message = FALSE}
+for(i in 1:7){
+  temp <- paste(c("Rstudent Residuals vs ",names(df2)[i]), collapse = " ")
+  residualPlot(reducedmodel, type="rstudent", quadratic = F, col = "dodgerblue",
+pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5, var =names(df2)[i]) + title(temp)
+}
+
+
+```
+
+
+**Transformed data by taking the log of the predictor HIV.AIDS**
+```{R, tidy = TRUE, message = FALSE} 
+df3 <- df
+df3[,7] <- log(df3[,7])
+full_data_Transformed <- full_data
+full_data_Transformed[,10] <- log(full_data_Transformed[,10])
+```
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+library(reshape2)
+library(ggplot2)
+ggplot(df,aes(x = df3[,7], y = df3[,11])) + geom_point() + geom_smooth(aes(x = df3[,7], y = df3[,11], col="red"), method=lm, se=FALSE) + theme(axis.text.x = element_text(angle = 30, hjust=1)) + xlab("log(HIV.AIDS)") + ylab("Life Expectancy") + ggtitle("Life Expectancy vs log(HIV.AIDS)")
+
+```
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+library(reshape2)
+library(ggplot2)
+df2 <- melt(df3[,1:11], id.vars = "LifeExpectancy")
+ggplot(df2) +
+  geom_jitter(aes(value,LifeExpectancy, colour=variable),) +
+  facet_wrap(~variable, scales="free_x") + 
+  theme(axis.text.x = element_text(angle = 30, hjust=1))
+
+```
+
+
+```{R, tidy = TRUE, message = FALSE, fig.align = "center"} 
+ggplot(df2) +
+  geom_jitter(aes(value,LifeExpectancy, colour=variable),) +
+  geom_smooth(aes(value,LifeExpectancy, colour="purple"), method=lm, se=FALSE) +
+  facet_wrap(~variable, scales="free_x") + 
+  theme(axis.text.x = element_text(angle = 30, hjust=1)) 
+
+```
+
+
+
+```{R, tidy = TRUE, message = FALSE} 
+full2 <- lm(LifeExpectancy ~ ., data = df3)
+summary(full2)
+```
+
+```{R, tidy = TRUE, message = FALSE} 
+library(car)
+vif(full2)
+```
+
+
+```{R, tidy = TRUE, message = FALSE} 
+#View(trainer)
+df4 <- dplyr::select(df3,-(HepatitisB),-(TotalExpenditure))
+
+reducedmodel2 <- lm(LifeExpectancy ~ ., data = df4)
+summary(reducedmodel2)
+```
+
+LifeExpectancy = 5.009e+01 + (6.887e-02)Alcohol + (1.770e-02)Measles + (1.401e-02)Polio + (1.781e-01)BMI - (3.101)HIV/AIDS + (7.097e-05)GDP + (9.359)Schooling + (4.995e-01)HDI_Income
+
+```{R, tidy = TRUE, message = FALSE} 
+library(car)
+vif(reducedmodel2)
+```
+
+```{R, tidy = TRUE, message = FALSE} 
+anova(reducedmodel2, full2)
+```
+
+
+
+
+```{R, tidy = TRUE, message = FALSE}
+#QQ plot approach
+library(MASS)
+library(car)
+par(mfrow=c(1,2))
+hist(studres(reducedmodel2), breaks=25, freq=F, col="cornflowerblue",
+cex.axis=1, cex.lab=1, cex.main=1)
+qqPlot(reducedmodel2) + title("QQ plot of StuResiduals vs tQuantiles", cex.main = 1)
+full_data_Transformed[62,]
+full_data_Transformed[1513,]
+```
+
+
+```{R, tidy = TRUE, message = FALSE}
+residualPlot(reducedmodel2, type="rstudent", quadratic=F, col = "dodgerblue",
+pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5) + title("Rstudent Residuals vs Fitted values")
+
+```
+
+
+
+
+```{R, tidy = TRUE, message = FALSE}
+for(i in 1:8){
+  temp <- paste(c("Rstudent Residuals vs ",names(df4)[i]), collapse = " ")
+  residualPlot(reducedmodel2, type="rstudent",quadratic = F, col = "dodgerblue",
+pch=16, cex=1.5, cex.axis=1.5, cex.lab=1.5, var =names(df4)[i])  + title(temp)
+}
+
+
+```
+
+
+
+
+
+```{R,tidy = TRUE, message = FALSE}
+library(MASS)
+library(printr)
+stdresiduals <- stdres(reducedmodel2)
+range(stdresiduals)
+barplot(height = stdresiduals, names.arg = 1:nrow(df4), main = "Standardized Residuals", xlab = "Index", ylab = "Standardized Resid", ylim=c(-6,6))
+#Add cutoff values. Either 2 or 3 can be chosen.
+abline(h=3, col = "Red", lwd=2)
+abline(h=-3, col = "Red", lwd=2)
+
+studresiduals <- studres(reducedmodel2)
+range(studresiduals)
+barplot(height = studresiduals, names.arg = 1:nrow(df4), main = "Studentized Residuals", xlab = "Index", ylab = "Studentized Resid", ylim=c(-6,6))
+#Add cutoff values. Either 2 or 3 can be chosen.
+abline(h=3, col = "Red", lwd=3)
+abline(h=-3, col = "Red", lwd=3)
+
+
+
+RStudent <- rstudent(reducedmodel2)
+range(RStudent)
+barplot(height = RStudent, names.arg = 1:nrow(df4), main = "R Student Residuals", xlab = "Index", ylab = "R Student Resid", ylim=c(-6,6))
+cor.level <- 0.05/(2*nrow(df4))
+cor.qt <- qt(cor.level, nrow(df4) - ncol(df4) - 1, lower.tail=F)
+abline(h=cor.qt , col = "Red", lwd=3)
+abline(h=-cor.qt , col = "Red", lwd=3)
+
+
+```
+```{R, tidy = TRUE, message = FALSE}
+influenceIndexPlot(reducedmodel2, vars=c("hat"))
+abline(h=27/1853 , col = "Red", lwd=3)
+```
+```{R, tidy = TRUE, message = FALSE}
+influenceIndexPlot(reducedmodel2, vars=c("Cook"))
+```
+\newpage
+```{R, tidy = TRUE, message = FALSE}
+myInf <- influence.measures(reducedmodel2)
+#summary(myInf) 
+```
+ 
+   
+            
+              
+             
+            
+
+
+
+```{R, tidy = TRUE, message = FALSE}
+library(car)
+dfbetasPlots(reducedmodel2,intercept=T)
+```
+
+
+```{R, tidy = TRUE, message = FALSE}
+#table 1
+library(plyr)
+knitr::kable(plyr::ddply(dplyr::select(full_data_Transformed[which((stdresiduals > 3 | stdresiduals < -3) == TRUE),],(Country:Year)), .(Country), summarise, Year = list(sort(unlist(Year)))), caption = 'Potentially Influential Observations of Standardized and Studentized Residual Plots') 
+
+#table 2
+tab <- matrix(c(59, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 37, 169), ncol=13, byrow=TRUE)
+colnames(tab) <- c('hat', 'cook.d','dfb.1_', 'dfb.Alch', 'dfb.Msls', 'dfb.Poli', 'dfb.BMI', 'dfb.HIV.', 'dfb.GDP', 'dfb.Schl', 'dfb.HDI_', 'dffit', 'cov.r')
+knitr::kable(tab, caption = '# of Potentially Influential Observations for each Measure')
+
+#table 3
+knitr::kable(plyr::ddply(dplyr::select(full_data_Transformed[which((hatvalues(reducedmodel2) > 27/1853) == TRUE),],(Country:Year)), .(Country), summarise, Year = list(sort(unlist(Year)))), caption = 'Potentially Influential Observations of hat Measure')
+
+#table of diagnostic plot
+knitr::kable(plyr::ddply(dplyr::select(full_data_Transformed[61:62,],(Country:Year)), .(Country), summarise, Year = list(sort(unlist(Year)))))
+
+```
+
+
+
+\newpage
+```{R, tidy = TRUE, message = FALSE}
+#table 5
+knitr::kable(plyr::ddply(dplyr::select(full_data_Transformed[c(11, 12, 13, 14, 15, 16, 61, 62, 63, 64, 65, 192, 239, 259, 260, 507, 606, 607, 642, 643, 695, 696, 886, 933, 934, 936, 937, 938, 991, 1266, 1362, 1513, 1515, 1516, 1518, 1520, 1529),],(Country:Year)), .(Country), summarise, Year = list(sort(unlist(Year)))), caption = 'Potentially Influential Observations of DFFIT Measure')
+```
+
+\newpage
+```{R, tidy = TRUE, message = FALSE}
+#table 6
+knitr::kable(plyr::ddply(dplyr::select(full_data_Transformed[c(2:11,13:16,44,45,47:51,61:65,94:97,105,108,121,122,162,167,193,200,201,246:249,293,353,375,422,446,448,507,516,517,521:524,582,607,631,640,687:694,701:704,747:751,763,779,791,819,832:835,857:865,888:893,895,934:939,985,986,988,991,993,995,996,1071,1088,1124,1128:1130,1143,1192,1202,1204,1232,1233,1237,1239,1272,1273,1362,1377,1379,1380,1382,1383,1427,1437,1512:1520,1529,1545,1562,1563,1573,1620,1621,1681,1734:1742,1744,1750,1831,1833,1835),],(Country:Year)), .(Country), summarise, Year = list(sort(unlist(Year)))), caption = 'Potentially Influential Observations of COVRATIO Measure')
+```  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
