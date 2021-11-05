@@ -1,0 +1,55 @@
+#1 hidden layer of 2 nodes
+funct_name is activation function to use
+x training data set (331,4) called xtr
+y training data set (331,1) called ytr
+W1 initialize (3,4)
+W2 initialize (1,3)
+xb45 vector for x0,x4,x5 initialized to 0 (3,1)
+x6 vector for x6 (1,1)
+delta6 initialized to 0 delta calculated for x6
+deltab45 initialized to 0 (3,1) contains the delta of the hidden nodes and bias 
+	going into x6 of order bias,x4,x5
+
+training
+
+for loop iterating over how many max iteration to perform
+	for loop j iterating over the number of rows in xtr 
+		forward pass
+
+		xb45 = W1 dot xtr[j, all the columns]
+		xb45[1] = activation function(xb45[1],funct_name)
+		xb45[2] = activation function(xb45[2],funct_name)
+		x6[0] = activation function(W2 dot xb45, funct_name)
+
+		backword pass
+		
+		delta6 = plug ytr[j],x6[0],funct_name into function for calculating the delta for output node
+		for loop k 0:3
+			deltab45[k] = plug ytr[j],xb45[k],delta6,W2[0,K],funct_name into function for calc 
+				the delta for hidden layer note not all variable will be used 
+				depends on the activation function
+			W2[0,k] = W2[0,k] + learing rate * delta6 * xb45[k] 
+				updates the weights for bias3,x4,x5 going to x6
+		for loop k 1:3
+			for loop l 0:4
+				W1[k,l] = W1[k,l] + learing rate * deltab45[k] * xtr[j,l] 
+					updates the weights for bias1,x1,x2,x3 going to x4
+					updates the weights for bias2,x1,x2,x3 going to x5 on second pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
