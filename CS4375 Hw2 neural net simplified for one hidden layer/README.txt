@@ -21,4 +21,4 @@ and  lastly to specify the number of neuron's hidden in the hidden layer change 
 
 fyi
 I have found that the parameters can give some strange outputs with the same parameters used so if not desired result found run it agian a few times to see if it works then
-alse if too big of a learning rate is used and depending on the number of iterations specified np.exp() will give nan values  try a smaller learnign rate or smaller number of iterations
+alse if too big of a learning rate is used and depending on the number of iterations specified np.exp() will give nan values  try a smaller learning rate or smaller number of iterations
